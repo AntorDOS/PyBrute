@@ -5,7 +5,7 @@ from termcolor import colored
 import urllib3
 # Banner
 print()
-print(colored(pyfiglet.figlet_format("pybrute", font="pagga"), color="blue"))
+print(colored(pyfiglet.figlet_format("pybrute", font="slant"), color="blue"))
 print(colored("Built By Jahid Hasan", color="green"))
 print()
 
